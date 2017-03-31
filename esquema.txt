@@ -1,0 +1,12 @@
+===============================================================
+		ESQUEMA JSON
+===============================================================
+
+- Título
+- Autores
+	-Nombre
+	-Apellidos
+- Año
+- Date
+- Tipo de publicación: Article, Book, Inproceeding
+
