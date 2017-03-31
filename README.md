@@ -1,6 +1,8 @@
 # BDNoSQL
 Data analysis with NoSQL data bases
 
+Data source -> http://dblp.uni-trier.de/
+
 ## Introduction
 DBLP Computer Science Bibliography data base is considered to be the largest collection of computing academic references. It stores data of scientific journals and academic conferences among others. MongoDB and Neo4j will be used to store and analyse the downloaded information.
 
