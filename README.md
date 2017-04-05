@@ -1,5 +1,5 @@
 # BDNoSQL
-Data analysis with NoSQL data bases
+Data analysis project with NoSQL data bases. Authors: Jon Kobeaga and Jorge Navarro.
 
 Data source -> http://dblp.uni-trier.de/
 
