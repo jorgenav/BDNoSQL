@@ -3,9 +3,10 @@ db.practica.find(
     {
         "Authors.Nombre" : "Luca Cabibbo"
         },
-    { "Title":1, "Authors.Nombre":1}
+    {"_id":0, "Title":1}
 
 )
+
 
 // 2. Número de publicaciones de un autor determinado.(El aggregate tarda mas)
 db.practica.find(
@@ -33,15 +34,15 @@ db.practica.aggregate([
             "TotalPub":{$sum:1}
         }},
         {$match: {
-        "TotalPub": { $lt : 5 } // en nuestro caso $lt: 5
+        "TotalPub": { $lt : 5 }
         }},
         {$count: "Authors"}
         ])        
 // 5. Número de artículos de revista (article) y número de artículos en congresos 
 //  (inproceedings) de los diez autores con más publicaciones totales.
-//  Creando una tabla se hace mas rapido, sobretodo la segunda parte. (una vez que ya tienes la tabla)
-// De la forma que lo ha hecho Jorge queda mas limpio, pero, se sacan separados los dos resultados. (Hablarlo)
+// Problemas al ejecutar group por memoria -> Se filtra para obtener unicamente años 2015 y 2016
 db.practica.aggregate([
+        {$match:{"Year":{$gt:2015}}},
         {$unwind:"$Authors"},
         { $group : {
             _id : "$Authors.Nombre",
@@ -77,8 +78,6 @@ db.tiposPub.aggregate([
         ])
 
 //  6. Número medio de autores de todas las publicaciones que tenga en su conjunto de datos.
-// Nos da un valor diferente, porque Jorge calcula la media de las medias y este valor no es igual que
-// la media total
 
 db.practica.aggregate([
         {$group:{
@@ -92,24 +91,98 @@ db.practica.aggregate([
 
 // 7. Listado de coautores de un autor (Se denomina coautor a cualquier persona que haya
 // firmado una publicación).
-// Jorge saca la lista de coautores de un autor, Jon, la lista de los coautores de todos lo autores
-// Hablarlo porque igual el de Jon peta con muchos documentos        
+// Listado de coautores para UN SOLO autor
+db.practica.aggregate([{$match:{"Authors.Nombre":"Luca Cabibbo"}},
+                   {$group:{_id: "$Authors.Nombre","coauthor":{$push: "$Authors.Nombre"}}},
+                   {$unwind:"$_id"},
+                   {$match:{"_id":"Luca Cabibbo"}},
+                   {$unwind:"$coauthor"},
+                   {$project: {"coauthor": {$setDifference: ["$coauthor",["Luca Cabibbo"]]}}},
+                   {$unwind:"$coauthor"},
+                   {$group: {_id:"$_id", "coauthor":{$push:"$coauthor"} }}])
+
+// Listado de coautores POR CADA autor
+db.practica.aggregate([
+        {$match:{"Year":{$eq:2012}}},
+        {$unwind:"$Authors"},
+        {$group:{
+            "_id":"$Authors.Nombre",
+            "Publications":{$push:"$_id"}
+            }},
+        {$sort:{"_id":1}},
+        {$out:"AutPub"}
+        ])
+
+db.AutPub.find()
+        
+db.practica.aggregate([
+        {$unwind:"$Authors"},
+        {$lookup:{
+            from:"AutPub",
+            localField:"_id",
+            foreignField:"Publications",
+            as: "autores"
+            }},
+        {$project:{
+            "Nombre":"$Authors.Nombre",
+            "_id":"$Nombre",
+            "autores._id":1
+            }},
+        {$limit:20},
+        {$group:{
+            "_id":"$Nombre",
+            "Coautores":{$push:"$autores"},
+            }},
+        {$unwind:"$Coautores"},
+        {$unwind:"$Coautores"},
+        {$group:{
+            "_id":"$_id",
+            "listaCoautores":{$addToSet:"$Coautores"}
+            }},
+        {$out:"Coautores"}
+        ])
+        
+db.Coautores.update({},{$pull:{"listaCoautores":{"_id":"$_id"}}}, {multi:true})
+db.Coautores.find()
+        
+        
+// En caso de querer mostrar los coautores PARA CADA autor, mongodb falla por exceder limites de memoria -> Mejor Neo4j??
+
         
 // 8. Edad de los 5 autores con un periodo de publicaciones más largo (Se considera la Edad
 // de un autor al número de años transcurridos desde la fecha de su primera publicación
 // hasta la última registrada).
-// No se lo que hace Jorge.... Hablarlo
-        
+db.practica.aggregate([{$match:{"Year":{$gt:2013}}},
+                   {$unwind:"$Authors"},
+                   {$group:{_id:"$Authors.Nombre","first":{$last:"$Year"},"last":{$first:"$Year"}}},
+                   {$project:{"_id":1,"Edad":{"$subtract":["$last","$first"]}}},
+                   {$sort:{"Edad":-1}},
+                   {$limit:5}])
+// Filtrado de años para evitar errores de memoria -> Neo4j mejor??
+
         
 // 9. Número de autores novatos, es decir, que tengan una Edad menor de 5 años (Se considera la edad de un
 // autor al número de años transcurridos desde la fecha de su primera publicación hasta la última registrada).
-// El de Jon tarda bastante mas y es mas sucio        
-db.practica.aggregate([{$unwind:"$Authors"},
+db.practica.aggregate([{$match:{"Year":{$gt:2013}}},
+                   {$unwind:"$Authors"},
                    {$group:{_id:"$Authors.Nombre","first":{$last:"$Year"},"last":{$first:"$Year"}}},
                    {$project:{"Edad":{"$subtract":["$last","$first"]}}},
                    {$match:{"Edad":{$lt:5}}},
-                   {$count:"Autores novatos"}])   
+                   {$count:"Autores novatos"}])
               
 // 10. Porcentaje de publicaciones en revistas con respecto al total de publicaciones.
-// Tardan lo mismo (hablarlo)                   
-        
+db.practica.aggregate([
+            {$group:{
+                "_id":"article",
+           "TotalArticles":{
+                $sum:{
+                    $cond:[ {$eq: ["$Type","article"]},1,0]
+                }
+            },
+                 "TotPub":{$sum:1}
+                        }},
+            {$project:{
+                "TotPub":1,
+                "TotalArticles":1,
+                "Porportion":{$multiply:[{$divide:["$TotalArticles","$TotPub"]},100]}}}            
+            ])

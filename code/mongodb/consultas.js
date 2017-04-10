@@ -6,7 +6,7 @@ db.practica.find(
     {
         "Authors.Nombre" : "Luca Cabibbo"
         },
-    { "Title":1, "Authors.Nombre":1}
+    {"_id":0, "Title":1}
 
 )
  
@@ -22,7 +22,7 @@ db.practica.find(
 
 db.practica.find(
     {
-        "Year" : 2014,
+        "Year" : 2016,
         "Type" : "article"
         }
 ).count()
@@ -45,8 +45,9 @@ db.practica.aggregate([
 
 db.practica.find()
 db.practica.aggregate([
+        {$match:{'Year':{$gt:2015}}},
         {$unwind:"$Authors"},
-        { $group : {
+        {$group : {
             _id : "$Authors.Nombre",
             "TotalPub":{$sum:1},
             "Tipos":{$push:"$Type"}
@@ -99,6 +100,7 @@ db.practica.aggregate([
 // firmado una publicación).
 
 db.practica.aggregate([
+        {$match:{"Year":{$eq:2012}}},
         {$unwind:"$Authors"},
         {$group:{
             "_id":"$Authors.Nombre",
@@ -107,7 +109,6 @@ db.practica.aggregate([
         {$sort:{"_id":1}},
         {$out:"AutPub"}
         ])
-
 
 db.AutPub.find()
         
@@ -136,10 +137,12 @@ db.practica.aggregate([
             "listaCoautores":{$addToSet:"$Coautores"}
             }},
         {$out:"Coautores"}
-        ])  
+        ])
+        
+        
 db.Coautores.update({},{$pull:{"listaCoautores":{"_id":"$_id"}}}, {multi:true})
 db.Coautores.find()
-            
+
       
 //  Edad de los 5 autores con un periodo de publicaciones más largo (Se considera la Edad
 // de un autor al número de años transcurridos desde la fecha de su primera publicación
@@ -147,7 +150,7 @@ db.Coautores.find()
         
 db.publications.find()
     
-db.practica.aggregate([
+db.practica.aggregate([{$match:{"Year":{$gt:2013}}},
         {$unwind: "$Authors"},
         {$group:{
             "_id": "$Authors.Nombre",
@@ -175,7 +178,7 @@ db.practica.aggregate([
 // primera publicación hasta la última registrada).
 
 
-db.practica.aggregate([
+db.practica.aggregate([{$match:{"Year":{$gt:2013}}},
         {$unwind: "$Authors"},
         {$group:{
             "_id": "$Authors.Nombre",
@@ -204,7 +207,7 @@ db.practica.aggregate([
 
 db.practica.aggregate([
             {$group:{
-                "_id":null,
+                "_id":"article",
            "TotalArticles":{
                 $sum:{
                     $cond:[ {$eq: ["$Type","article"]},1,0]
@@ -215,6 +218,5 @@ db.practica.aggregate([
             {$project:{
                 "TotPub":1,
                 "TotalArticles":1,
-                "Porportion":{$multiply:[{$divide:["$TotalArticles","$TotPub"]},100]}}}
-            
-            ])      
+                "Porportion":{$multiply:[{$divide:["$TotalArticles","$TotPub"]},100]}}}            
+            ])
