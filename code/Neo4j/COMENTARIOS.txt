@@ -1,0 +1,1 @@
+~/PATH_TO_NEO4J_FOLDER/bin/neo4j-import --into ~/PATH_TO_NEO4J_FOLDER/data/databases/movies-example.db/ --nodes movies.csv --nodes actors.csv --relationships roles.csv
