@@ -1,6 +1,7 @@
 import xml.etree.ElementTree as ET
 from collections import OrderedDict
-import pandas
+import pandas as pd
+import numpy as np
 # import threading
 
 
@@ -72,56 +73,147 @@ parser.entity["Ucirc"] = 'Û'
 parser.entity["Euml"] = 'Ë'
 
 
-xml_file = 'data/dblp.' + str(self.filenum) + '.xml'
+xml_file = '../../../data/data_test.xml'
 
 e = ET.parse(xml_file, parser=parser).getroot()
-
-tot_docs = len(e)
-doc_number = 0
-mitad = False
-max_mitad = False
-complete = False
-found = False
-
 
 # html.unescape(f.read()).replace('&','&#038;')
 
 d = {}
 docs = ['article', 'inproceedings', 'incollection']
-tags = ['author', 'year', 'month', 'title', 'booktitle']
+tags = ['author', 'year', 'title']
+
+dict_autores = OrderedDict()
+dict_autores["authorId:ID(Author)"] = []
+dict_autores["name"] = []
+dict_autores[":LABEL"] = []
+
+dict_publicaciones = OrderedDict()
+dict_publicaciones["pubId:ID(Pubs)"] = []
+dict_publicaciones["Title"] = []
+dict_publicaciones["Year"] = []
+dict_publicaciones[":TYPE"] = []
+
+dict_rel_AA = OrderedDict()
+dict_rel_AA[":START_ID(Authors)"] = []
+dict_rel_AA["Title"] = []
+dict_rel_AA["Year"] = []
+dict_rel_AA[":END_ID(Authors)"] = []
+dict_rel_AA[":TYPE"] = []
+
+dict_autores_general = {}
+dict_pub_general = {}
+
+dict_rel_AP = OrderedDict()
+dict_rel_AP[":START_ID(Authors)"] = []
+dict_rel_AP[":END_ID(Pubs)"] = []
+dict_rel_AP[":TYPE"] = []
 
 
-# Borrado previo del fichero de resultados
-with open('data/result' + str(self.filenum) +'.txt', 'w') as out:
-    out.writelines('')
+
+authorId = 1
+pubId = 1
+
+# Almacenamiento de valores en dicc para volcado posterior a json
+for child1 in e:
+    list_rel_AA = []
+    list_rel_AP = []
+    print("Next doc---------------------------------------------")
+    if (child1.tag in docs):
+
+        # d[child1.tag] = OrderedDict()
+        # d[child1.tag]['doc_type'] = child1.tag
+        # d[child1.tag]['author'] = []
+        dict_publicaciones[":TYPE"].append(child1.tag)
+
+        for child2 in child1:
+            if (child2.tag in tags):
+                if (child2.tag == 'title'):
+                    dict_publicaciones["pubId:ID(Pubs)"].append(pubId)
+                    dict_publicaciones["Title"].append(child2.text)
+                    title_rel_AA = child2.text
+                    # dict_rel_AP[":END_ID(Pubs)"].append(dict_pub_general[child2.text])
+                    dict_pub_general[child2.text] = pubId
+                    pubId += 1
+                elif (child2.tag == 'year'):
+                    dict_publicaciones["Year"].append(child2.text)
+                    year_rel_AA = child2.text
+                elif (child2.tag == 'author'):
+                    if child2.text not in dict_autores["name"]:
+                        dict_autores["authorId:ID(Author)"].append(authorId)
+                        dict_autores["name"].append(child2.text)
+
+                        dict_autores_general[child2.text] = authorId
+
+                        dict_autores[":LABEL"].append("Autor")
+                        authorId += 1
+                    if child2.text not in list_rel_AA:
+                        list_rel_AA.append(dict_autores_general[child2.text])
 
 
-    # Almacenamiento de valores en dicc para volcado posterior a json
-    for child1 in e:
-        if ((doc_number / tot_docs > 0.5) & (not mitad)):
-            print('50% de los documentos procesados en el thread',str(self.filenum))
-            mitad = True
-        if ((doc_number / tot_docs > 0.9) & (not max_mitad)):
-            print('90% de los documentos procesados en el thread',str(self.filenum))
-            max_mitad = True
-        if ((doc_number / tot_docs == 1.0) & (not complete)):
-            print('100% de los documentos procesados en el thread',str(self.filenum))
-            complete = True
-        if (child1.tag in docs):
-            if (child1.tag == 'inproceedings') & (not found):
-                print('Al menos un inproceeding encontrado en fichero',str(self.filenum))
-                found = True
-            d[child1.tag] = OrderedDict()
-            d[child1.tag]['doc_type'] = child1.tag
-            d[child1.tag]['author'] = []
-            for key, value in child1.attrib.items():
-                d[child1.tag][key] = value
-            for child2 in child1:
-                if (child2.tag in tags):
-                    if (child2.tag == 'author'):
-                        d[child1.tag]['author'].append(child2.text)
-                    else:
-                        d[child1.tag][child2.tag] = child2.text
-            out.writelines(json.dumps(d[child1.tag])+'\n')
-        doc_number += 1
-out.close()
+                        # list_rel_AA.append(dict_autores["name"])
+
+                        # dict_autores["name"] == child2.text
+                        # dict_autores["authorId:ID(Author)"]
+
+
+                    # d[child1.tag]['author'].append(child2.text)
+                else:
+                    # d[child1.tag][child2.tag] = child2.text
+                    pass
+        cont_rel_AA = 0
+        for i in range(len(list_rel_AA)):
+            print(len(list_rel_AA))
+            dict_rel_AP[":START_ID(Authors)"].append(list_rel_AA[i])
+            dict_rel_AP[":TYPE"].append("Autoria")
+            dict_rel_AP[":END_ID(Pubs)"].append(dict_pub_general[title_rel_AA])
+            print(dict_rel_AP[":START_ID(Authors)"])
+            print(dict_rel_AP[":TYPE"])
+            print(dict_rel_AP[":END_ID(Pubs)"])
+
+            for j in range(i+1,len(list_rel_AA)):
+                dict_rel_AA[":START_ID(Authors)"].append(list_rel_AA[i])
+                dict_rel_AA[":END_ID(Authors)"].append(list_rel_AA[j])
+                # print(cont_rel_AA)
+                # print(list_rel_AA[i])
+                # print(list_rel_AA[j])
+                cont_rel_AA += 1
+
+        dict_rel_AA[":TYPE"] = np.repeat("Collaborate", len(dict_rel_AA[":START_ID(Authors)"]))
+        for x in np.repeat(title_rel_AA, cont_rel_AA):
+            dict_rel_AA["Title"].append(x)
+        for x in np.repeat(year_rel_AA, cont_rel_AA):
+            dict_rel_AA["Year"].append(x)
+
+
+
+# CREACION DE DATAFRAMES
+autores = pd.DataFrame(dict_autores)
+publicaciones = pd.DataFrame(dict_publicaciones)
+
+
+# print("OJOOOOOOOOOOOOOOOOOO")
+
+
+
+
+# for x in dict_publicaciones
+
+
+
+relation_AA = pd.DataFrame(dict_rel_AA)
+relation_AP = pd.DataFrame(dict_rel_AP)
+
+
+
+
+print(autores)
+print(publicaciones)
+print(relation_AA)
+print(relation_AP)
+
+
+
+# for x in dict_rel_AP.keys():
+#     print(x, len(x), dict_rel_AP[x])
+    # '../../data/result_correct.csv
