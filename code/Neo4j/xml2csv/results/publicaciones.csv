@@ -1,0 +1,4 @@
+pubId:ID(Pubs),Title,Year,:LABEL
+1,Travel Agency: A LOGIDATA+ Application.,1994,incollection
+2,The LOGIDATA+ Model.,1993,incollection
+3,Effective Implementation of Negation in Database Logic Query Languages.,1993,incollection

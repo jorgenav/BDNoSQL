@@ -92,9 +92,9 @@ class MyThread(threading.Thread):
 
         # html.unescape(f.read()).replace('&','&#038;')
 
-        d = {}
+        d = OrderedDict()
         docs = ['article', 'inproceedings', 'incollection']
-        tags = ['author', 'year', 'month', 'title', 'booktitle']
+        tags = ['author', 'year', 'title']
 
 
         # Borrado previo del fichero de resultados
@@ -113,24 +113,24 @@ class MyThread(threading.Thread):
                 if ((doc_number / tot_docs == 1.0) & (not complete)):
                     print('100% de los documentos procesados en el thread',str(self.filenum))
                     complete = True
-                if (child1.tag in docs):
-                    if (child1.tag == 'inproceedings') & (not found):
-                        print('Al menos un inproceeding encontrado en fichero',str(self.filenum))
-                        found = True
-                    d[child1.tag] = OrderedDict()
-                    d[child1.tag]['doc_type'] = child1.tag
-                    d[child1.tag]['author'] = []
-                    for key, value in child1.attrib.items():
-                        d[child1.tag][key] = value
-                    for child2 in child1:
-                        if (child2.tag in tags):
-                            if (child2.tag == 'author'):
-                                d[child1.tag]['author'].append(child2.text)
-                            else:
-                                d[child1.tag][child2.tag] = child2.text
-                    out.writelines(json.dumps(d[child1.tag])+'\n')
-                doc_number += 1
-        out.close()
-
+                    if (child1.tag in docs):
+                        if (child1.tag == 'inproceedings') & (not found):
+                            print('Al menos un inproceeding encontrado en fichero', str(self.filenum))
+                            found = True
+                        d['Type'] = child1.tag
+                        d['Authors'] = []
+                        for child2 in child1:
+                            if (child2.tag in tags):
+                                if (child2.tag == 'author'):
+                                    dicc_aut = dict()
+                                    dicc_aut["Nombre"] = child2.text
+                                    d['Authors'].append(dicc_aut)
+                                elif child2.tag == "title":
+                                    d["Title"] = child2.text
+                                elif child2.tag == "year":
+                                    d["Year"] = child2.text
+                        out.writelines(json.dumps(d) + '\n')
+                    doc_number += 1
+            out.close()
 for i in range(7):
     MyThread(i).start()

@@ -1,0 +1,67 @@
+
+10 autores con mayor número de publicaciones
+
+MATCH (n:Autor)-->(Incollection)
+RETURN n.name AS name, count(Incollection.Title) AS tot
+ORDER BY tot DESC
+LIMIT 10
+
+
+
+
+
+MATCH (n:Autor)-->(Pub)
+WHERE Pub.tipo == Incollecion
+RETURN count(Incollection), n.name AS name, count(Incollection.Title) AS tot
+ORDER BY tot DESC
+LIMIT 10
+
+
+
+MATCH (a:Autor)-[r:Autoria]->(p:Pub)
+WITH a.name AS Autor, collect(p.Tipo) AS Publicaciones, count(p) AS Total
+ORDER BY Total DESC
+LIMIT 10
+UNWIND Publicaciones as Publicacion
+RETURN Autor, Publicacion, Total
+
+
+
+RETURN Autor, count(Publicacion)
+
+
+
+
+MATCH (a:Autor)-[r:Autoria]->(p:Pub {Tipo: "incollection"})
+WITH count(p) AS Incollection
+RETURN Incollection
+MATCH (a:Autor)-[r:Autoria]->(pA:Pub {Tipo: "article"})
+RETURN a.name AS Autor, count(pA) as Article, Incollection
+ORDER BY Article DESC
+LIMIT 10
+
+
+
+
+PREGUNTA 2 - Número de pubs por autor
+
+MATCH (a:Autor)-[r:Autoria]->(p:Pub)
+RETURN a.name AS Autor, count(p) AS Publicaciones
+ORDER BY Publicaciones DESC
+LIMIT 10
+
+
+
+PREGUNTA 7 - Coautores de un autor
+
+MATCH (a:Autor)-[r:Collaborate]->(a2:Autor)
+RETURN a.name as Autor, collect(a2.name) AS Colaboradores
+
+
+PREGUNTA 6 - Nº medio de todas las publicaciones
+
+MATCH (a:Autor)-[r:Autoria]->(p:Pub)
+WITH count(r) AS Autorias, count(DISTINCT p) AS Pubs
+RETURN toFloat(Autorias)/Pubs
+
+PREGUNTA 5 - 
