@@ -5,13 +5,13 @@ def file_len(fname):
             pass
     return i
 
-with open('data/result_total.json','w') as output:
+with open('../../../data/result_total.json','w') as output:
     output.write('')
 
     output.write('[')
     readed = False
     for i in range(7):
-        json_file = 'data/result' + str(i) + '.txt'
+        json_file = '../../../data/result' + str(i) + '.txt'
         with open(json_file, 'r') as insert:
             n = 0
             for line in insert:
