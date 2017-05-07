@@ -1,4 +1,4 @@
-// 1. Listado de todas las publicaciones de un autor determinado. (El aggregate tarda mas)
+// 1. Listado de todas las publicaciones de un autor determinado.
 db.practica.find(
     {
         "Authors.Nombre" : "Luca Cabibbo"
@@ -8,14 +8,14 @@ db.practica.find(
 )
 
 
-// 2. Número de publicaciones de un autor determinado.(El aggregate tarda mas)
+// 2. Número de publicaciones de un autor determinado.
 db.practica.find(
     {
         "Authors.Nombre" : "Luca Cabibbo"
         }
 ).count()
         
-// 3. Número de artículos en revista para el año 2016.(El aggregate tarda mas)
+// 3. Número de artículos en revista para el año 2016.
 
 db.practica.find(
     {
@@ -25,7 +25,7 @@ db.practica.find(
 ).count()    
       
 // 4. Número de autores ocasionales, es decir, que tengan menos de 5 publicaciones en total.
-//         (Lo tenemos igual)
+
         
 db.practica.aggregate([
         {$unwind:"$Authors"},
@@ -146,7 +146,7 @@ db.Coautores.update({},{$pull:{"listaCoautores":{"_id":"$_id"}}}, {multi:true})
 db.Coautores.find()
         
         
-// En caso de querer mostrar los coautores PARA CADA autor, mongodb falla por exceder limites de memoria -> Mejor Neo4j??
+// En caso de querer mostrar los coautores PARA CADA autor, mongodb falla por exceder limites de memoria
 
         
 // 8. Edad de los 5 autores con un periodo de publicaciones más largo (Se considera la Edad
@@ -158,7 +158,7 @@ db.practica.aggregate([{$match:{"Year":{$gt:2013}}},
                    {$project:{"_id":1,"Edad":{"$subtract":["$last","$first"]}}},
                    {$sort:{"Edad":-1}},
                    {$limit:5}])
-// Filtrado de años para evitar errores de memoria -> Neo4j mejor??
+// Filtrado de años para evitar errores de memoria
 
         
 // 9. Número de autores novatos, es decir, que tengan una Edad menor de 5 años (Se considera la edad de un
