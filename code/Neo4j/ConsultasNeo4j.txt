@@ -1,0 +1,22 @@
+
+PREGUNTA 2 - Número de pubs por autor
+
+MATCH (a:Autor)-[r:Autoria]->(p:Pub)
+RETURN a.name AS Autor, count(p) AS Publicaciones
+ORDER BY Publicaciones DESC
+LIMIT 10
+
+
+PREGUNTA 7 - Coautores de un autor
+
+MATCH (a:Autor)-[r:Collaborate]->(a2:Autor)
+RETURN a.name as Autor, collect(a2.name) AS Colaboradores
+
+
+PREGUNTA 6 - Nº medio de todas las publicaciones
+
+MATCH (a:Autor)-[r:Autoria]->(p:Pub)
+WITH count(r) AS Autorias, count(DISTINCT p) AS Pubs
+RETURN toFloat(Autorias)/Pubs
+
+
